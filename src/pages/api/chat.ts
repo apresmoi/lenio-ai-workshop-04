@@ -16,12 +16,13 @@ export default async function handler(
 
   if (!messages || !messages.length) return res.status(200).json([]);
 
+  //getting following action from the LLM
   const followingAction = await getFollowingAction(messages);
 
   console.log({ followingAction });
 
   if (followingAction === "CREATE_INCIDENT") {
-    res.status(200).json([
+    return res.status(200).json([
       ...messages,
       {
         role: "assistant",
@@ -30,14 +31,15 @@ export default async function handler(
       },
     ]);
   } else if (followingAction === "CREATE_SERVICE_TICKET") {
-    res.status(200).json([
+    return res.status(200).json([
       ...messages,
       {
         role: "assistant",
         content: "A ticket has been created, you will be hearing from us soon.",
       },
     ]);
-  } else if (followingAction === "REPLY") {
+  } else if (followingAction === "SEARCH_KNOWLEDGE_BASE") {
+    //getting questions from the FAQ that would apply to the conversation
     const applicableQuestions = await getFAQApplicableQuestions(messages);
 
     console.log({ applicableQuestions });
@@ -50,6 +52,7 @@ ${q.answer}`
       )
       .join("\n\n");
 
+    //crafting reply to the User by using previous conversation and new context
     const reply = await getChatReply(faqContext || "", messages);
 
     console.log({ getChatReply: reply });
